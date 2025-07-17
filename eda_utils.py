@@ -1,0 +1,30 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def basic_stats(df):
+    print("\n=== Basic Statistics ===")
+    print(df.describe(include='all'))
+
+    print("\n=== Missing Values ===")
+    print(df.isnull().sum())
+
+def plot_correlation_matrix(df):
+    print("\n=== Correlation Matrix ===")
+    numeric_df = df.select_dtypes(include=['number'])
+    corr = numeric_df.corr()
+
+    print(corr)
+
+    if len(corr.columns) > 1:
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(corr, annot=True, fmt=".2f", cmap='coolwarm')
+        plt.title("Correlation Matrix")
+        plt.tight_layout()
+        plt.show()
+    else:
+        print("Not enough numerical features for correlation heatmap.")
+
+def full_eda(df):
+    basic_stats(df)
+    plot_correlation_matrix(df)
