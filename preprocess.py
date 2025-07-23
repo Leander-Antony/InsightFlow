@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OrdinalEncoder
 
 # === COMMON UTILS ===
 def separate_features_target(df, target_column):
@@ -12,14 +13,21 @@ def separate_features_target(df, target_column):
     y = df[target_column]
     return X, y
 
-def encode_categoricals(X):
-    label_encoders = {}
-    for col in X.columns:
-        if X[col].dtype == 'object' or X[col].dtype.name == 'category':
-            le = LabelEncoder()
-            X[col] = le.fit_transform(X[col].astype(str))
-            label_encoders[col] = le
-    return X, label_encoders
+
+
+def encode_categoricals(X, encoders=None):
+    cat_cols = X.select_dtypes(include='object').columns.tolist()
+    if encoders is None:
+        encoders = {}
+        for col in cat_cols:
+            oe = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+            X[[col]] = oe.fit_transform(X[[col]])
+            encoders[col] = oe
+    else:
+        for col in cat_cols:
+            X[[col]] = encoders[col].transform(X[[col]])
+    return X, encoders
+
 
 def scale_features(X):
     scaler = StandardScaler()
@@ -43,12 +51,12 @@ def preprocess_regression(df, target_column):
         imp_cat = SimpleImputer(strategy='most_frequent')
         X[cat_cols] = imp_cat.fit_transform(X[cat_cols])
 
-    X, _ = encode_categoricals(X)
-    X, _ = scale_features(X)
+    X, label_encoders = encode_categoricals(X)
+    X, scaler = scale_features(X)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test, label_encoders, scaler
 
 
 # === CLASSIFICATION ===
@@ -59,15 +67,15 @@ def preprocess_classification(df, target_column):
     imp = SimpleImputer(strategy='most_frequent')
     X = pd.DataFrame(imp.fit_transform(X), columns=X.columns)
 
-    X, _ = encode_categoricals(X)
-    X, _ = scale_features(X)
+    X, label_encoders = encode_categoricals(X)
+    X, scaler = scale_features(X)
 
     if y.dtype == 'object' or y.dtype.name == 'category':
         y = LabelEncoder().fit_transform(y.astype(str))
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test, label_encoders, scaler
 
 # === TIME SERIES ===
 def preprocess_time_series(df, target_column, date_column=None, n_lags=3):
@@ -111,8 +119,8 @@ def preprocess_unsupervised(df):
         imp_cat = SimpleImputer(strategy='most_frequent')
         df[cat_cols] = imp_cat.fit_transform(df[cat_cols])
 
-    df, _ = encode_categoricals(df)
-    df, _ = scale_features(df)
+    df, label_encoders = encode_categoricals(df)
+    df, scaler = scale_features(df)
 
-    return df
+    return df, label_encoders, scaler
 
