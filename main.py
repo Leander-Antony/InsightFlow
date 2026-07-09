@@ -15,6 +15,10 @@ from model_training import train_and_evaluate, train_and_evaluate_unsupervised
 
 
 def run_pipeline(df, target_column):
+    # Drop rows where the target variable is missing (NaN)
+    if target_column and target_column in df.columns:
+        df = df.dropna(subset=[target_column])
+
     problem_type = detect_problem_type_from_df(df, target_column)
 
     # --- Time Series ---
