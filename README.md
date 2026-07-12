@@ -2,7 +2,9 @@
 
 ![InsightFlow](image.png)
 
-<iframe src="https://drive.google.com/file/d/12LlCfqOjHMuhBiwUochYJGcuOKw55Rsf/preview" width="640" height="480" allow="autoplay"></iframe>
+<a href="https://drive.google.com/file/d/12LlCfqOjHMuhBiwUochYJGcuOKw55Rsf/view?usp=sharing" target="_blank">
+  <img src="https://img.shields.io/badge/▶_Watch_Demo_Video-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch the Demo Video" />
+</a>
 
 InsightFlow is a Streamlit-based AutoML application that automatically detects the problem type (Classification, Regression, Time Series, or Unsupervised Learning) and builds a complete machine learning pipeline for it — from preprocessing and feature selection to training and evaluation.
 
