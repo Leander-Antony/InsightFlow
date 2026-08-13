@@ -10,7 +10,7 @@ def detect_problem_type(file_path: str, target_column: str) -> str:
         sample_value = str(df[col].iloc[0])
         if any(char.isdigit() for char in sample_value) and ("-" in sample_value or "/" in sample_value):
             try:
-                df[col] = pd.to_datetime(df[col], errors='raise', infer_datetime_format=True)
+                df[col] = pd.to_datetime(df[col], errors='raise')
             except:
                 continue
 

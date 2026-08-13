@@ -22,6 +22,13 @@ def main():
         cwd=root_dir
     )
 
+    # Start FastAPI Backend
+    print("⚡ Starting FastAPI backend on port 8000...")
+    fastapi_process = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"],
+        cwd=root_dir
+    )
+
     # Start React Frontend
     print("💻 Starting React frontend on port 5173...")
     # On Windows, we need shell=True for npm commands to resolve correctly
@@ -34,6 +41,7 @@ def main():
 
     print("\n✅ All services started successfully!")
     print("🌐 Landing Page: http://localhost:5173")
+    print("⚡ FastAPI Backend: http://localhost:8000")
     print("⚙️  Streamlit App: http://localhost:8501")
     print("\nPress Ctrl+C to stop all services.")
 
@@ -47,10 +55,12 @@ def main():
         # Terminate processes
         streamlit_process.terminate()
         frontend_process.terminate()
+        fastapi_process.terminate()
         
         # Wait for them to close
         streamlit_process.wait()
         frontend_process.wait()
+        fastapi_process.wait()
         
         print("👋 Goodbye!")
 

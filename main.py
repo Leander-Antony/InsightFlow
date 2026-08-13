@@ -24,15 +24,17 @@ def run_pipeline(df, target_column):
     # --- Time Series ---
     if problem_type.startswith("Time Series"):
         for col in df.columns:
-            try:
-                df[col] = pd.to_datetime(df[col], errors='coerce')
-            except:
-                continue
+            sample_value = str(df[col].iloc[0])
+            if any(char.isdigit() for char in sample_value) and ("-" in sample_value or "/" in sample_value):
+                try:
+                    df[col] = pd.to_datetime(df[col], errors='raise')
+                except:
+                    continue
         X_train, X_test, y_train, y_test = preprocess_time_series(df, target_column)
         full_eda(X_train)
-        model, metrics = train_and_evaluate(problem_type, X_train, X_test, y_train, y_test)
+        model, metrics, shap_explainer = train_and_evaluate(problem_type, X_train, X_test, y_train, y_test)
         # encoders and scaler None for time series branch
-        return model, problem_type, X_train.columns.tolist(), None, None, metrics
+        return model, problem_type, X_train.columns.tolist(), None, None, metrics, shap_explainer
 
     # --- Classification ---
     elif problem_type == "Classification":
@@ -55,8 +57,8 @@ def run_pipeline(df, target_column):
             index=X_test_selected.index,
         )
 
-        model, metrics = train_and_evaluate(problem_type, X_selected_scaled, X_test_selected_scaled, y_train, y_test)
-        return model, problem_type, X_selected.columns.tolist(), label_encoders, selected_scaler, metrics
+        model, metrics, shap_explainer = train_and_evaluate(problem_type, X_selected_scaled, X_test_selected_scaled, y_train, y_test)
+        return model, problem_type, X_selected.columns.tolist(), label_encoders, selected_scaler, metrics, shap_explainer
 
     # --- Regression ---
     elif problem_type == "Regression":
@@ -77,15 +79,15 @@ def run_pipeline(df, target_column):
             index=X_test_selected.index,
         )
 
-        model, metrics = train_and_evaluate(problem_type, X_selected_scaled, X_test_selected_scaled, y_train, y_test)
-        return model, problem_type, X_selected.columns.tolist(), label_encoders, selected_scaler, metrics
+        model, metrics, shap_explainer = train_and_evaluate(problem_type, X_selected_scaled, X_test_selected_scaled, y_train, y_test)
+        return model, problem_type, X_selected.columns.tolist(), label_encoders, selected_scaler, metrics, shap_explainer
 
     # --- Unsupervised ---
     elif problem_type == "Unsupervised Learning":
         df_processed, label_encoders, scaler = preprocess_unsupervised(df)
         full_eda(df_processed)
-        model, metrics = train_and_evaluate_unsupervised(df_processed)
-        return model, problem_type, df_processed.columns.tolist(), label_encoders, scaler, metrics
+        model, metrics, shap_explainer = train_and_evaluate_unsupervised(df_processed)
+        return model, problem_type, df_processed.columns.tolist(), label_encoders, scaler, metrics, shap_explainer
 
     else:
         raise ValueError("Unsupported or unrecognized problem type.")
@@ -103,11 +105,11 @@ def detect_problem_type_from_df(df: pd.DataFrame, target_column: str) -> str:
         sample_value = str(df[col].iloc[0])
         if any(char.isdigit() for char in sample_value) and ("-" in sample_value or "/" in sample_value):
             try:
-                df[col] = pd.to_datetime(df[col], errors='raise', infer_datetime_format=True)
+                df[col] = pd.to_datetime(df[col], errors='raise')
             except:
                 continue
 
-    if target_column.lower() in ["", "none", "unsupervised", "na"]:
+    if target_column is None or str(target_column).lower() in ["", "none", "unsupervised", "na"]:
         return "Unsupervised Learning"
 
     if target_column not in df.columns:
