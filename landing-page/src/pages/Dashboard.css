@@ -318,6 +318,19 @@
   50% { opacity: 0.3; }
 }
 
+.code-block {
+  background: var(--bg-color);
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--surface-border);
+  color: var(--text-main);
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 1rem;
+}
+
 /* Data Preview Table */
 .data-preview {
   margin-top: 1rem;

@@ -1,11 +1,13 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.responses import Response
 import pandas as pd
 import numpy as np
 import uuid
 import io
 import json
+import joblib
 
 from main import run_pipeline
 
@@ -191,6 +193,31 @@ def predict(req: PredictRequest):
         result["confidence"] = float(probs.max())
         
     return result
+
+@app.get("/export/{session_id}")
+def export_model(session_id: str):
+    if session_id not in demo_sessions or "model" not in demo_sessions[session_id]:
+        raise HTTPException(status_code=404, detail="Session or trained model not found")
+        
+    session = demo_sessions[session_id]
+    
+    export_data = {
+        "model": session.get("model"),
+        "encoders": session.get("encoders"),
+        "scaler": session.get("scaler"),
+        "feature_cols": session.get("feature_cols"),
+        "problem_type": session.get("problem_type")
+    }
+    
+    buf = io.BytesIO()
+    joblib.dump(export_data, buf)
+    buf.seek(0)
+    
+    return Response(
+        content=buf.read(),
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename=insightflow_model_{session_id[:8]}.pkl"}
+    )
 
 if __name__ == "__main__":
     import uvicorn

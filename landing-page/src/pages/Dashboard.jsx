@@ -6,7 +6,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import './Dashboard.css';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function Dashboard() {
   const [file, setFile] = useState(null);
@@ -346,6 +346,47 @@ function Dashboard() {
                   )}
                 </motion.div>
               )}
+            </motion.section>
+          )}
+        </AnimatePresence>
+
+        {/* Step 5: Export */}
+        <AnimatePresence>
+          {trainingState === 'done' && trainResults && (
+            <motion.section 
+              className="dashboard-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h2>5. 1-Click Export & Integrate</h2>
+              <p>Download your trained model or integrate it directly into your apps using the live API.</p>
+              
+              <div className="export-actions" style={{ marginTop: '1.5rem', marginBottom: '2rem' }}>
+                <a href={`${API_URL}/export/${sessionData.session_id}`} className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <UploadCloud size={18} style={{ transform: 'rotate(180deg)' }} /> Download Pipeline (.pkl)
+                </a>
+              </div>
+
+              <div className="code-snippets">
+                <h3>Local Python Usage</h3>
+                <pre className="code-block">
+{`import joblib
+import pandas as pd
+
+# Load the exported pipeline
+pipeline = joblib.load('insightflow_model_${sessionData.session_id.substring(0,8)}.pkl')
+model = pipeline['model']
+feature_cols = pipeline['feature_cols']
+
+# Make a prediction
+data = pd.DataFrame([{
+${trainResults.feature_cols.map(c => `    "${c}": 0`).join(',\n')}
+}])
+
+prediction = model.predict(data[feature_cols])
+print("Prediction:", prediction[0])`}
+                </pre>
+              </div>
             </motion.section>
           )}
         </AnimatePresence>
