@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, CheckCircle, BrainCircuit, Activity, BarChart2 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import './Dashboard.css';
 
 const API_URL = 'http://localhost:8000';
@@ -34,7 +36,7 @@ function Dashboard() {
       setTrainingState('idle');
     } catch (err) {
       console.error('Upload failed:', err);
-      alert('File upload failed.');
+      toast.error('File upload failed. Please try again.');
     }
   };
 
@@ -60,7 +62,7 @@ function Dashboard() {
     } catch (err) {
       console.error('Training failed:', err);
       setTrainingState('error');
-      alert('Training failed: ' + (err.response?.data?.detail || err.message));
+      toast.error('Training failed: ' + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -80,7 +82,7 @@ function Dashboard() {
       setPrediction(response.data);
     } catch (err) {
       console.error('Prediction failed:', err);
-      alert('Prediction failed.');
+      toast.error('Prediction failed. Please check your inputs.');
     } finally {
       setPredicting(false);
     }
@@ -92,6 +94,7 @@ function Dashboard() {
 
   return (
     <div className="dashboard-container">
+      <Toaster position="top-right" toastOptions={{ style: { background: '#27272a', color: '#f8fafc', border: '1px solid #3b82f6' } }} />
       <header className="dashboard-header">
         <div className="logo">
           <BrainCircuit size={28} /> InsightFlow AutoML
@@ -120,8 +123,32 @@ function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
             >
               <h2>2. Configure & Train</h2>
+              <p>Uploaded <strong>{sessionData.filename}</strong> successfully.</p>
+              <div className="dataset-stats">
+                <div className="stat-box"><span>Rows</span> <b>{sessionData.num_rows}</b></div>
+                <div className="stat-box"><span>Columns</span> <b>{sessionData.columns.length}</b></div>
+              </div>
               
-              <div className="data-preview">
+              <div className={`data-visualizations ${trainingState === 'training' ? 'training-pulse' : ''}`}>
+                <h4>Data Quality Preview</h4>
+                <div className="chart-wrapper" style={{ width: '100%', height: 250, marginTop: '1rem' }}>
+                  <ResponsiveContainer>
+                    <BarChart data={Object.entries(sessionData.column_info).map(([name, info]) => ({ name, unique: info.unique, missing: info.missing }))} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                      <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} angle={-45} textAnchor="end" />
+                      <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--surface-border)', color: 'var(--text-main)' }} 
+                        itemStyle={{ color: 'var(--accent)' }}
+                      />
+                      <Bar dataKey="unique" fill="var(--accent)" radius={[4, 4, 0, 0]} name="Unique Values" />
+                      <Bar dataKey="missing" fill="#ff5f56" radius={[4, 4, 0, 0]} name="Missing Values" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className={`data-preview ${trainingState === 'training' ? 'training-pulse' : ''}`}>
                 <h3>Data Preview (First 5 rows)</h3>
                 <div className="table-responsive">
                   <table>
@@ -274,7 +301,13 @@ function Dashboard() {
                   animate={{ opacity: 1, scale: 1 }}
                 >
                   <div className="pred-header">
-                    <h3>Prediction Result: <span>{typeof prediction.prediction === 'number' ? prediction.prediction.toFixed(4) : prediction.prediction}</span></h3>
+                    <h3>Prediction Result: <span>
+                      {trainResults.problem_type === 'Unsupervised Learning' 
+                        ? `Cluster ${prediction.prediction}` 
+                        : (typeof prediction.prediction === 'number' && (trainResults.problem_type === 'Regression' || trainResults.problem_type.startsWith('Time Series')) 
+                            ? prediction.prediction.toFixed(4) 
+                            : prediction.prediction)}
+                    </span></h3>
                     {prediction.confidence && (
                       <p>Confidence: {(prediction.confidence * 100).toFixed(2)}%</p>
                     )}

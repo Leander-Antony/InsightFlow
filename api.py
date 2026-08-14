@@ -50,17 +50,19 @@ async def upload_file(file: UploadFile = File(...)):
     preview_df = df.head(5).fillna("")
     preview_data = preview_df.to_dict(orient='records')
     
-    # Get column info for dynamic form generation
+    # Get column info for dynamic form generation and EDA
     column_info = {}
     for col in df.columns:
+        missing_count = int(df[col].isnull().sum())
+        unique_count = int(df[col].nunique())
         if df[col].dtype == 'object' or df[col].dtype.name == 'category':
             unique_vals = df[col].dropna().unique().tolist()
             if len(unique_vals) < 50: # Only send unique values for low cardinality
-                column_info[col] = {"type": "categorical", "values": unique_vals}
+                column_info[col] = {"type": "categorical", "values": unique_vals, "missing": missing_count, "unique": unique_count}
             else:
-                column_info[col] = {"type": "text", "values": []}
+                column_info[col] = {"type": "text", "values": [], "missing": missing_count, "unique": unique_count}
         else:
-            column_info[col] = {"type": "numeric", "mean": float(df[col].mean()) if not df[col].isna().all() else 0}
+            column_info[col] = {"type": "numeric", "mean": float(df[col].mean()) if not df[col].isna().all() else 0, "missing": missing_count, "unique": unique_count}
 
     session_id = str(uuid.uuid4())
     demo_sessions[session_id] = {

@@ -30,11 +30,10 @@ def run_pipeline(df, target_column):
                     df[col] = pd.to_datetime(df[col], errors='raise')
                 except:
                     continue
-        X_train, X_test, y_train, y_test = preprocess_time_series(df, target_column)
+        X_train, X_test, y_train, y_test, label_encoders, scaler = preprocess_time_series(df, target_column)
         full_eda(X_train)
         model, metrics, shap_explainer = train_and_evaluate(problem_type, X_train, X_test, y_train, y_test)
-        # encoders and scaler None for time series branch
-        return model, problem_type, X_train.columns.tolist(), None, None, metrics, shap_explainer
+        return model, problem_type, X_train.columns.tolist(), label_encoders, scaler, metrics, shap_explainer
 
     # --- Classification ---
     elif problem_type == "Classification":

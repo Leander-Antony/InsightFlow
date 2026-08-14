@@ -130,14 +130,33 @@ def preprocess_time_series(df, target_column, date_column=None, n_lags=3):
 
     df = df.dropna()
 
-    X = df[[f'{target_column}_lag{i}' for i in range(1, n_lags + 1)]]
-    y = df[target_column]
+    X, y = separate_features_target(df, target_column)
+    if date_column in X.columns:
+        X = X.drop(columns=[date_column])
+
+    num_cols = X.select_dtypes(include=[np.number]).columns
+    cat_cols = X.select_dtypes(exclude=[np.number]).columns
+
+    if len(num_cols) > 0:
+        imp_num = SimpleImputer(strategy='median')
+        X[num_cols] = imp_num.fit_transform(X[num_cols])
+
+    if len(cat_cols) > 0:
+        imp_cat = SimpleImputer(strategy='most_frequent')
+        X[cat_cols] = imp_cat.fit_transform(X[cat_cols])
+
+    if y.dtype == 'object' or y.dtype.name == 'category':
+        y = pd.to_numeric(y, errors='coerce')
+        y = y.fillna(y.median())
+
+    X, label_encoders = encode_categoricals_target(X, y, task='regression')
+    X, scaler = scale_features(X)
 
     split_index = int(len(df) * 0.8)
     X_train, X_test = X.iloc[:split_index], X.iloc[split_index:]
     y_train, y_test = y.iloc[:split_index], y.iloc[split_index:]
 
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test, label_encoders, scaler
 
 # === UNSUPERVISED ===
 def preprocess_unsupervised(df):
