@@ -25,13 +25,16 @@ InsightFlow is a Streamlit-based AutoML application that automatically detects t
 ## 📁 Project Structure
 
 ```
+├── run.py                   # Unified runner for all services
+├── api.py                   # FastAPI backend
 ├── app.py                   # Streamlit app UI logic
 ├── main.py                  # Core pipeline logic
+├── landing-page/            # React frontend (Vite)
 ├── prob_type.py             # Problem type detection logic
 ├── preprocess.py            # Preprocessing logic for all problem types
 ├── model_training.py        # Model training and evaluation
 ├── eda_utils.py             # EDA utilities (correlation matrix, stats)
-├── featureselection.py      # Feature selection methods
+├── feature_selection.py     # Feature selection methods
 ```
 
 ---
@@ -62,28 +65,38 @@ InsightFlow is a Streamlit-based AutoML application that automatically detects t
 ## 📦 Dependencies
 
 * Python 3.9+
-* Streamlit
-* Pandas
-* NumPy
-* Scikit-learn
-* Seaborn
-* Matplotlib
+* Node.js (for the React frontend)
+* Streamlit, FastAPI, Uvicorn
+* Pandas, NumPy, Scikit-learn
+* Seaborn, Matplotlib
 
-Install them via:
+Install Python dependencies via:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Install frontend dependencies:
+```bash
+cd landing-page
+npm install
+cd ..
 ```
 
 ---
 
 ## 🧪 Example Usage
 
-Run the app with:
+You can run all three services (React Frontend, FastAPI Backend, Streamlit App) simultaneously using the unified runner:
 
 ```bash
-streamlit run app.py
+python run.py
 ```
+
+This will start:
+* **Landing Page**: http://localhost:5173
+* **FastAPI Backend**: http://localhost:8000
+* **Streamlit App**: http://localhost:8501
 
 Upload your CSV, select the target column, and let InsightFlow do the rest.
 
